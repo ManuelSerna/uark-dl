@@ -4,53 +4,52 @@ import numpy as np
 '''
 Spatial correlation of image with filter mask
 Input:
-	- I: input image of size m x n (numpy array)
-	- f: filter mask of size r (assumed to be odd dims) (numpy array)
+    - I: input image of size m x n (numpy array)
+    - f: filter mask of size r (assumed to be odd dims) (numpy array)
 Return:
-	- C: correlated image C (numpy array)
-
-Note: Image is zero-padded with r-1 zeros in every direction
+    - C: correlated image C cropped to original size (numpy array)
 '''
 #=================================
 def correlation(I, f):
-	m = len(f)
-	
-	# Zero-pad image
-	I = np.pad(I, m-1)
+    m = len(f)
+    
+    # Zero-pad image
+    I = np.pad(I, m-1)
 
-	# Create result array J
-	n = len(I[0])
-	J = np.zeros((n, n))
-	pad = int((m-1)/2)
+    # Create result array J
+    n = len(I[0])
+    J = np.zeros((n, n))
+    pad = int((m-1)/2)
 
-	# Run filter through the image
-	for i in range(pad, n-pad):
-		for j in range(pad, n-pad):
-			for k in range(m):
-				for l in range(m):
-					J[i, j] += f[k, l] * I[i+k-1, j+l-1]
-	
-	# TODO: crop result, reassign to J
+    # Run filter through the image
+    for i in range(pad, n-pad):
+        for j in range(pad, n-pad):
+            for k in range(m):
+                for l in range(m):
+                    J[i, j] += f[k, l] * I[i+k-1, j+l-1]
+    
+    # Crop result
+    J = J[m-1:n-pad-1, m-1:n-pad-1]
 
-	return J
+    return J
 
 
 
-# Tests
+# Unit tests
 '''
 img = np.array([
-	[4, 6, 1, 4, 5, 3],
-	[9, 0, 7, 3, 3, 8],
-	[2, 6, 9, 3, 2, 0],
-	[7, 0, 4, 7, 4, 8],
-	[5, 3, 5, 0, 6, 0],
-	[9, 1, 0, 2, 4, 2]
+    [4, 6, 1, 4, 5, 3],
+    [9, 0, 7, 3, 3, 8],
+    [2, 6, 9, 3, 2, 0],
+    [7, 0, 4, 7, 4, 8],
+    [5, 3, 5, 0, 6, 0],
+    [9, 1, 0, 2, 4, 2]
 ])
 
 f = np.array([
-	[2, 2, 1],
-	[0, 2, 1],
-	[2, 2, 2]
+    [2, 2, 1],
+    [0, 2, 1],
+    [2, 2, 2]
 ])
 
 Outputs:
@@ -64,21 +63,29 @@ Outputs:
  [ 0. 14. 32. 23. 18. 24. 22. 16.  0.  0.]
  [ 0.  9. 19. 20.  4.  8. 14. 12.  4.  0.]
  [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]]
+ 
+Cropped output:
+[[32. 45. 26. 39. 41. 28.]
+ [48. 62. 71. 52. 45. 36.]
+ [42. 68. 60. 61. 62. 46.]
+ [40. 55. 64. 66. 38. 32.]
+ [47. 49. 31. 44. 58. 36.]
+ [32. 23. 18. 24. 22. 16.]]
 '''
 
 '''
 img = np.array([
-	[0, 0, 0, 0, 0],
-	[0, 0, 0, 0, 0],
-	[0, 0, 1, 0, 0],
-	[0, 0, 0, 0, 0],
-	[0, 0, 0, 0, 0]
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
 ])
 
 f = np.array([
-	[1, 2, 3],
-	[4, 5, 6],
-	[7, 8, 9]
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9]
 ])
 
 Outputs:
@@ -91,22 +98,29 @@ Outputs:
  [0. 0. 0. 0. 0. 0. 0. 0. 0.]
  [0. 0. 0. 0. 0. 0. 0. 0. 0.]
  [0. 0. 0. 0. 0. 0. 0. 0. 0.]]
+ 
+ Cropped output:
+ [[0. 0. 0. 0. 0.]
+  [0. 9. 8. 7. 0.]
+  [0. 6. 5. 4. 0.]
+  [0. 3. 2. 1. 0.]
+  [0. 0. 0. 0. 0.]]
 '''
 
 '''
 img = np.array([
-	[1, 9, 7, 8, 8, 2],
-	[6, 7, 7, 2, 8, 9],
-	[5, 2, 3, 7, 4, 8],
-	[1, 4, 3, 8, 5, 5],
-	[9, 5, 5, 3, 6, 4],
-	[2, 8, 9, 9, 9, 5]
+    [1, 9, 7, 8, 8, 2],
+    [6, 7, 7, 2, 8, 9],
+    [5, 2, 3, 7, 4, 8],
+    [1, 4, 3, 8, 5, 5],
+    [9, 5, 5, 3, 6, 4],
+    [2, 8, 9, 9, 9, 5]
 ])
 
 f = np.array([
-	[0, 0, 2],
-	[2, 1, 2],
-	[0, 1, 1]
+    [0, 0, 2],
+    [2, 1, 2],
+    [0, 1, 1]
 ])
 
 Outputs:
