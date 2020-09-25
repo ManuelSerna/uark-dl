@@ -1,4 +1,3 @@
-% OBJECTIVE OF FILE HERE
 % Data derived from Linear Algebra with Applications, 9th ed., Steven J. Leon
 
 clear
