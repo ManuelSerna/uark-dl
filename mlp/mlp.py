@@ -1,9 +1,20 @@
 #*********************************
 '''
-    MLP 
-     Objective: Build MLP with one hidden layer to classify data within or outside a unit circle centered at the origin (0,0).
+MLP 
+    Objective: Build MLP with one hidden layer to classify data within or outside a unit circle centered at the origin (0,0).
 
-    Author: Manuel Serna-Aguilera
+Author: Manuel Serna-Aguilera
+
+TASKS:
+ DONE: Create MLP--adapted from MNIST NN
+ DONE: Use cross-entropy loss in back prop
+ DONE: Report training loss
+ TODO, done if correct: Report validation loss (NOTE: DOUBLE CHECK--do I just iterate over the validation set and only compute the cross entropy loss or do I have to adjust the hyperparameters as well, for this assignment?)
+ DONE: Report testing accuracy via a %
+ TODO: plot testing accuracy in matplotlib fig
+ TODO: train mlp with 10 iterations and output train and val loss, and test acc
+ TODO: train mlp with 100 iterations and output train and val loss, and test acc
+ TODO: train mlp with 1000 iterations and output train and val loss, and test acc
 '''
 #*********************************
 
@@ -14,21 +25,23 @@ import matplotlib.pyplot as plt
 
 #=================================
 # MLP Class
-# NOTE TODO: adapt the code I already made for the mnist neural network in my ml-notes repo
 #=================================
 class mlp():
     #-----------------------------
     # Constructor
     '''
-     Input: TODO: describe parameters (copy comments for attributes below and then delete them
+     Input:
+        epochs: how many iterations to train on
+        s: list where each element represents the number of activations in each layer l
+        lr: learning rate
     '''
     #-----------------------------
     def __init__(self, epochs, s, lr):
         self.W = [] # weights
         self.b = [] # biases
-        self.epochs = epochs # how many times to train over data
-        self.s = s  # list where each element represents the number of activations in each layer l
-        self.lr = lr # learning rate of model
+        self.epochs = epochs
+        self.s = s
+        self.lr = lr
         
         # Initialize parameters
         for l in range(len(self.s)-1):
@@ -44,38 +57,92 @@ class mlp():
         return 1/(1+np.exp(-z))
     
     #-----------------------------
-    # Fit data
+    # Derivative of sigmoid
+    #  Input: weighted sum matrix z
+    #  Return: derivative function result
+    #-----------------------------
+    def d_sigmoid(self, z):
+        return self.sigmoid(z) * (1-self.sigmoid(z))
+    
+    #-----------------------------
+    # Cost function: Cross entropy loss
     '''
      Input:
-        x_in: n*2 numpy array of training points
-        y_in: labels for the corresponding point x_in[i]
-     MAYBE?: Return:
-     MAYBE?:   model: Python dictionary containing the optimized W and b
+        a: network output (single number)
+        y: true/desired output (single number)
+     Return: function result
+     NOTE: numpy.log is natural log
     '''
     #-----------------------------
-    def fit(self, x_in, y_in):
-        #W, b = initialize(s)
-        n = len(y_in)
+    def cross_entropy(self, a, y):
+        return -y*np.log(a) - (1-y)*np.log(1-a)
+    
+    #-----------------------------
+    # Derivative of cross entropy loss
+    '''
+     Input:
+        a: network output (single number)
+        y: true/desired output (single number)
+     Return: derivative function result
+    '''
+    #-----------------------------
+    def d_cross_entropy(self, a, y):
+        np.seterr(divide='ignore', invalid='ignore')
+        return -1*(y/a) + ((1-y)/(1-a))
+    
+    #-----------------------------
+    # Fit data and report training and validation loss
+    '''
+     Input:
+        x_train: n_train*2 numpy array of training points
+        y_train: labels for the corresponding point x_train[i]
+        x_val: n_val*2 numpy array of training points
+        y_val: labels for the corresponding point x_val[i]
+     Return: NA
+    '''
+    #-----------------------------
+    def fit(self, x_train, y_train, x_val, y_val):
+        print('Training ({} epochs)...'.format(self.epochs))
+        l_train = 0 # training loss
+        l_val = 0 # validation loss
+        n_train = len(y_train) # number of training samples
+        n_val = len(y_val) # number of validation samples
         
         for epoch in range(self.epochs):
-            print(' epoch {}'.format(epoch+1))
-            for i in range(n):
-                #print('traninig sample {}'.format(i))
+            print(' epoch {}'.format(epoch+1)) # DEBUG msg
+            for i in range(n_train):
+                #print('traninig sample {}'.format(i)) # DEBUG msg
                 
                 # Insert one training sample and label at a time
                 x = np.zeros((2, 1)) # need column vector of data instance
                 for j in range(2):
-                    x[j, 0] = x_in[i][j]
-                
-                y = y_in[i]
+                    x[j, 0] = x_train[i][j]
+                y = y_train[i] # single true label
                 
                 Z, A = self.forward_prop(x) # forward propagate on one instance of train data
                 dW, db = self.back_prop(Z, A, x, y)
                 self.update(dW, db)
-        
-        #model = {}
-        #model['W'] = self.W
-        #model['b'] = self.b
+                
+                # Add loss for sample i
+                l_train += self.cross_entropy(A[-1][0], y) # pass last val in A (single activation, so this is fine)
+            
+            # Compute: training loss after epoch
+            l_train = (1/n_train)*l_train
+            print('  Training Loss: {}'.format(l_train))
+            
+            # Compute: validation loss after epoch on entire validation set
+            for l in range(n_val):
+                # Insert one training sample and label at a time
+                x = np.zeros((2, 1)) # need column vector of data instance
+                for j in range(2):
+                    x[j, 0] = x_val[l][j]
+                y = y_val[l] # single true label
+                
+                Z, A = self.forward_prop(x) # forward propagate on one instance of val data
+                l_val += self.cross_entropy(A[-1][0], y)
+            
+            l_val = (1/n_val)*l_val
+            print('  Validation Loss: {}'.format(l_val))
     
     #-----------------------------
     # Forward propagate
@@ -111,8 +178,8 @@ class mlp():
      Input:
         Z: list of weighted sums
         A: list of activations
-        x: single input (2*1 numpy array)
-        y: single input label (1*1 numpy array)
+        x: single training input (2*1 numpy array)
+        y: single training label for input point (number)
      Return:
         dW: calculated change for W
         db: calculated change for b
@@ -132,28 +199,18 @@ class mlp():
             db.append(np.zeros(self.b[l].shape))
             dA.append(np.zeros(A[l].shape))
         
-        # Y will contain the desired labels of every output activation given a specific training
-        '''
-        # Y is just y for this mlp, maybe include this code again? (If so, change y to Y 13 lines down)
-        Y = []
-        for i in range(s[L]):
-            if i == y:
-                Y.append(1.0)
-            else:
-                Y.append(0.0)
-        '''
         # Back-propagate from output layer
         for l in range(L-1, -1, -1):
             for i in range(len(dW[l])):
                 # Pre-compute: partial der of activation func for current layer l
-                dz = self.sigmoid(Z[l][i]) * (1 - self.sigmoid(Z[l][i]))
+                dz = self.d_sigmoid(Z[l][i])
                 
                 # Compute: partial der of activation
-                if l == L-1: # if starting at last layer
-                    dA[l][i] = 2 * (A[l][i] - y)# NOTE: in old code: Y[i]
+                if l == L-1: # if starting at last layer, use der of cost function
+                    dA[l][i] = self.d_cross_entropy(A[l][i], y) # get cross entropy val with network output at A[l=2][i=0]
                 else: # else at hidden layer l
                     for k in range(len(dW[l+1])): # get pre-computed values of activations of l+1
-                        dA[l][i] += self.W[l+1][k][i] * self.sigmoid(Z[l+1][k]) * (1 - self.sigmoid(Z[l+1][k])) * dA[l+1][k]
+                        dA[l][i] += self.W[l+1][k][i] * self.d_sigmoid(Z[l+1][k]) * dA[l+1][k]
                 
                 # Compute: partial der for bias
                 db[l][i] = dz * dA[l][i]
@@ -174,6 +231,7 @@ class mlp():
      Input:
         dW: calculated change for W
         db: calculated change for b
+     Return: NA
     '''
     #---------------------------------
     def update(self, dW, db):
@@ -187,23 +245,21 @@ class mlp():
     # Predict label on test input
     '''
      Input: x: single input (2*1) array
-     Return: predicted label (output of last layer)
+     Return: predicted label y (output of last layer)
     '''
     #-----------------------------
     def predict(self, x):
-        Z, A = forward_prop(x)
+        # Get network output
+        Z, A = self.forward_prop(x)
+        y = A[-1]
         
-        '''
-        max_prob = -1.0
-        max_index = -1
+        # Make output binary for comparison with labels
+        if y >= 0.5:
+            y = 1
+        else:
+            y = 0
         
-        for k in range(len(A[-1])):
-            if max_prob < A[-1][k]:
-                max_prob = A[-1][k]
-                max_index = k
-        '''
-        # NOTE: A[0] should be single label 0 or 1
-        return A[0]
+        return y
     
     #-----------------------------
     # Evaluate model for accuracy
@@ -212,26 +268,29 @@ class mlp():
         x_test: test data (n_test*2)
         y_test: test labels (n_test*1)
     '''
+    # TODO: plot figure in this method after eval along with printing accuracy
     #-----------------------------
     def evaluate(self, x_test, y_test):
+        print('Evaluating...')
+        d = 2 # dimensionality of data x
         n = len(y_test)
         tot_correct = 0
         
         # Make predictions on test data
         for i in range(n):
-            x = np.zeros((784, 1)) # need to make a 'column array'
+            x = np.zeros((d, 1)) # need to make a 'column numpy array' for one data sample
             
-            for j in range(784):
-                x[j, 0] = x_test[i][j]
+            for j in range(d):
+                x[j, 0] = x_test[i][j] # copy one data sample
             
             y = self.predict(x)
-            #print(y_test[i], y)# DEBUG
-
+            #print(y_test[i], y)# DEBUG msg
+            
             if y_test[i] == y:
                 tot_correct += 1
         
         # Print accuracy to console
-        print('Accuracy: {}/{} = {}%'.format(tot_correct, n, tot_correct/n * 100))
+        print('  Testing Accuracy: {}/{} = {}%'.format(tot_correct, n, tot_correct/n * 100))
 
 
 
@@ -293,9 +352,7 @@ iterations = 10 # a.k.a. epochs
 s = [2, 6, 1] # encapsulate circle with s[1]-sided shape
 lr = 0.01 # pre-determined learning rate
 
-# TODO: change squared diff to cross entropy loss
-# TODO: calculate loss wrt to new function
-# TODO: call model and test
+# Fit model and output results
 model = mlp(iterations, s, lr)
-model.fit(x_train, y_train)
-print('everything seems ok if this shows')
+model.fit(x_train, y_train, x_val, y_val)
+model.evaluate(x_test, y_test)
