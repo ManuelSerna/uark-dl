@@ -5,7 +5,8 @@
 % Note: subplot(nrows, ncols, plot_number)
 
 
-% Setup: Load face data from file and typecast matrices to double
+%% Setup: Load face data from file and typecast matrices to double
+tic % first timing
 clear
 load('Facedata.mat');
 colormap(gray);
@@ -16,8 +17,8 @@ for i=1:40
 end
 
 
-
-% a. 1) Plot mean image of person 1
+%% Part A
+% 1) Plot mean image of person 1
 mean1 = zeros(56, 46);
 
 % Add up face pixel values at corresponding positions
@@ -25,16 +26,14 @@ for j=1:10
     mean1 = mean1 + facedata{1, j};
 end
 mean1 = (1/10) * mean1;
-subplot(1, 2, 1);
+subplot(1, 10, 1);
 imagesc(mean1);
 title('Mean Face');
 
-
-
-% a. 2) Plot eigenfaces of person 1
-% Matrix X will be 10x2576, where the rows are the mean-centered images 
-% (reshaped to 1x2576) and the columns the attributes/variables/individual 
-% pixel values.
+% 2) Plot eigenfaces of person 1
+%  Matrix X will be 10x2576, where the rows are the mean-centered images 
+%  (reshaped to 1x2576) and the columns the attributes/variables/individual 
+%  pixel values.
 X = [reshape((facedata{1, 1} - mean1)', 1, []);
      reshape((facedata{1, 2} - mean1)', 1, []);
      reshape((facedata{1, 3} - mean1)', 1, []);
@@ -48,19 +47,28 @@ X = [reshape((facedata{1, 1} - mean1)', 1, []);
 ];
 
 S = cov(X);% compute covariance matrix (2576*2576)
-
-% Get eigenfaces
-[U, V] = eig(S);% NOTE: max eig vals are at the bottom right
+[U, V] = eig(S);% get eig faces; NOTE: max eig vals are at the bottom right
 
 % Plot eigenfaces: Since I only have n=10 samples, and the dimensionality
-% d=2576=56*46 (obviously n<<d), and, assuming linearly indpt data samples,
-% we have at MOST n-1 eigenvectors.
+%  d=2576=56*46 (obviously n<<d), and, assuming linearly indpt data samples,
+%  we have at MOST n-1 eigenvectors.
+% NOTE: Window label: Figure 1
+p = 1;
+counter = 2576;
+while counter > 2567
+    v = reshape(U(:, counter), [46,56])';
+    subplot(1, 10, p+1);
+    imagesc(v);
+    title(strcat('V',int2str(p)));
+    p = p + 1;
+    counter = counter - 1;
+end
 
-% eig vectors to plot: 2576, ..., 2568
-% TODO: loop over 2567-2568 and 
-% TODO: expand subplot
-max_eig = U(:, 2568);% get correspoding col vector
-max_eig = reshape(max_eig, [46,56])';% reshape and transpose to get og shape
-subplot(1, 2, 2);
-imagesc(max_eig);
-title('V1');
+%% Part B
+% Get time that it takes to take in data and plot eigen faces(tic toc)
+toc % typically takes ~2.5 secs
+
+%% Part C
+% TODO: Compute Gram matrix G=X'X
+%G = X*X';
+
