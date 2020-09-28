@@ -1,0 +1,15 @@
+10 iterations
+ train loss: 0.1354
+ val loss: 0.1339
+ test accuracy: 94.65%
+
+100 iterations
+ train loss: 0.0761
+ val loss: 0.0697
+ test accuracy: 97.55%
+
+1000 iterations
+ train loss: 0.0335
+ val loss: 0.0323
+ test accuracy: 99.05%
+
