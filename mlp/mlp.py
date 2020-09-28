@@ -4,17 +4,6 @@ MLP
     Objective: Build MLP with one hidden layer to classify data within or outside a unit circle centered at the origin (0,0).
 
 Author: Manuel Serna-Aguilera
-
-TASKS:
- DONE: Create MLP--adapted from MNIST NN
- DONE: Use cross-entropy loss in back prop
- DONE: Report training loss
- TODO, done if correct: Report validation loss (NOTE: DOUBLE CHECK--do I just iterate over the validation set and only compute the cross entropy loss or do I have to adjust the hyperparameters as well, for this assignment?)
- DONE: Report testing accuracy via a %
- TODO: plot testing accuracy in matplotlib fig
- TODO: train mlp with 10 iterations and output train and val loss, and test acc
- TODO: train mlp with 100 iterations and output train and val loss, and test acc
- TODO: train mlp with 1000 iterations and output train and val loss, and test acc
 '''
 #*********************************
 
@@ -42,6 +31,8 @@ class mlp():
         self.epochs = epochs
         self.s = s
         self.lr = lr
+        self.train_loss = [] # loss after every epoch
+        self.val_loss = [] # loss after every epoch
         
         # Initialize parameters
         for l in range(len(self.s)-1):
@@ -109,7 +100,7 @@ class mlp():
         n_val = len(y_val) # number of validation samples
         
         for epoch in range(self.epochs):
-            print(' epoch {}'.format(epoch+1)) # DEBUG msg
+            print(' Epoch {}'.format(epoch+1)) # DEBUG msg
             for i in range(n_train):
                 #print('traninig sample {}'.format(i)) # DEBUG msg
                 
@@ -128,7 +119,8 @@ class mlp():
             
             # Compute: training loss after epoch
             l_train = (1/n_train)*l_train
-            print('  Training Loss: {}'.format(l_train))
+            self.train_loss.append(l_train)
+            print('  Training Loss: {}'.format(l_train)) # DEBUG msg
             
             # Compute: validation loss after epoch on entire validation set
             for l in range(n_val):
@@ -142,7 +134,11 @@ class mlp():
                 l_val += self.cross_entropy(A[-1][0], y)
             
             l_val = (1/n_val)*l_val
-            print('  Validation Loss: {}'.format(l_val))
+            self.val_loss.append(l_val)
+            print('  Validation Loss: {}'.format(l_val)) # DEBUG msg
+        
+        #print('  Final Training Loss: {}'.format(l_train))
+        #print('  Final Validation Loss: {}'.format(l_val))
     
     #-----------------------------
     # Forward propagate
@@ -268,13 +264,13 @@ class mlp():
         x_test: test data (n_test*2)
         y_test: test labels (n_test*1)
     '''
-    # TODO: plot figure in this method after eval along with printing accuracy
     #-----------------------------
     def evaluate(self, x_test, y_test):
         print('Evaluating...')
         d = 2 # dimensionality of data x
-        n = len(y_test)
+        n = len(y_test) # total num of test samples
         tot_correct = 0
+        y_predict = [] # store predictions to plot
         
         # Make predictions on test data
         for i in range(n):
@@ -284,6 +280,7 @@ class mlp():
                 x[j, 0] = x_test[i][j] # copy one data sample
             
             y = self.predict(x)
+            y_predict.append(y)
             #print(y_test[i], y)# DEBUG msg
             
             if y_test[i] == y:
@@ -291,6 +288,27 @@ class mlp():
         
         # Print accuracy to console
         print('  Testing Accuracy: {}/{} = {}%'.format(tot_correct, n, tot_correct/n * 100))
+        
+        # Plot classifications
+        self.plot_data(x_test, y_predict, title='Testing Accuracy (Epochs={})'.format(self.epochs))
+        
+    #---------------------------------
+    '''
+    Plot set of points
+    Input:
+        x: n*2 numpy array of points
+        y: labels for corresponding x
+    Returns: NA
+    '''
+    #---------------------------------
+    def plot_data(self, x, y, title=' '):
+        for i in range(len(x)):
+            if y[i] == 0:
+                plt.plot(x[i, 0], x[i, 1], 'bo')
+            else:
+                plt.plot(x[i, 0], x[i, 1], 'ro')
+        plt.title(title)
+        plt.show()
 
 
 
@@ -315,23 +333,6 @@ def sample_points(n):
     x = np.concatenate([x1, x2], axis=1)
     return x,y
 
-#---------------------------------
-'''
-Plot set of points
- Input:
-    x: n*2 numpy array of points
-    y: labels for corresponding x
- Returns: NA
-'''
-#---------------------------------
-def plot_data(x, y):
-    for i in range(len(x)):
-        if y[i] == 0:
-            plt.plot(x[i, 0], x[i, 1], 'bo')
-        else:
-            plt.plot(x[i, 0], x[i, 1], 'ro')
-    plt.show()
-
 
 
 # Generate training data
@@ -349,7 +350,7 @@ x_test, y_test = sample_points(n_test)
 
 # Other setup
 iterations = 10 # a.k.a. epochs
-s = [2, 6, 1] # encapsulate circle with s[1]-sided shape
+s = [2, 4, 1] # encapsulate circle with s[1]-sided shape
 lr = 0.01 # pre-determined learning rate
 
 # Fit model and output results
