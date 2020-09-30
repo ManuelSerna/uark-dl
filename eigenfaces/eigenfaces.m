@@ -112,5 +112,56 @@ fprintf('Second timing (E): %f\n', time_pt_e); % typically clocks at ~ secs
 clear time_pt_e
 
 
-%% G: TODO
+%% G: Project image 1 of person 1 onto eigenspace
+figure(3)
+colormap(gray);
+
+subplot(2, 5, 1);% mean image first
+imagesc(facedata{1,1});
+title('Original');
+
+p = 1;% position in figure
+counter = 10;% start at max eigvector
+
+% Outer loop: estimation of image 1 with an increasing # of eigvectors
+while counter > 1
+    innerCounter = 10;% start with only one eig vector, then two, etc
+    estimation = mean1;% initialize image 1 estimation matrix with mean face
+    
+    % First, subtract mean image from image 1
+    c = facedata{1,1} - mean1;
+    
+    % Then, compute weight coefficients for eigvectors
+    while innerCounter >= counter
+        currentEigV = reshape(eigfaces(:, innerCounter), [56,46]);% at index 'innerCounter'
+        temp = c.*currentEigV;% element-wise multiply vals of 'centered' face c and current eig vector
+        weight = sum(temp, 'all');% add all elements to get coefficient
+        
+        % Add projection to final result v
+        estimation = estimation + (weight * currentEigV);
+        innerCounter = innerCounter - 1;
+    end
+    
+    % Finally, plot result
+    subplot(2, 5, p+1);
+    imagesc(estimation);
+    
+    % TODO: compute MSE and put it as title
+    N = norm(facedata{1,1}-estimation);
+    mse = (N*N)/2576;
+    title(strcat('MSE=',int2str(mse)));
+    
+    % Move on to next eig face
+    p = p + 1;
+    counter = counter - 1;
+end
+
+clear c
+clear counter
+clear currentEigV
+clear estimation
+clear innerCounter
+clear p
+clear temp
+clear weight
 
