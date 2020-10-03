@@ -5,6 +5,7 @@
 % We will only work with the faces of person 1.
 % Author: Manuel Serna-Aguilera
 
+
 %% Setup: Load face data from file
 clear
 tic % start timer
@@ -51,10 +52,10 @@ imagesc(reshape(mean, [56,46]));
 title('Mean Face');
 
 % Compute 2576*2576 covariance matrix S and get its eigs
-S = cov(normalize(X'));% make sure eigvectors will satisfy ||v||=1
-%S = cov(X');
+%S = cov(normalize(X'));% make sure eigvectors will satisfy ||v||=1
+S = cov(X');
 [eigvectors, eigvals] = eig(S);% NOTE: max eig vals are at bottom of diagonal
-Z = norm(eigvectors(:,10));% double check eigvectors of cov matrix are normal
+%Z = norm(eigvectors(:,10));% double check eigvectors of cov matrix are normal
 
 % Plot eigenfaces: Since I only have n=10 samples, and the dimensionality
 %  d=2576=56*46 (obviously n<<d), and, assuming linearly indpt data samples,
@@ -81,43 +82,25 @@ clear eigvals
 
 
 %% Part B
-%{
 % Time for plotting first set of eig faces
 time_pt_b = toc;
 fprintf('First timing (B): %f\n', time_pt_b); % typically clocks at ~2.4 secs
-%}
 
 
 %% Part C: Plot eigenfaces
-%
 figure(2)
 colormap(gray);
 
-% TODO: make sure eigvectors will satisfy ||v||=1
 G = cov(X);% compute inner product/Gram matrix G
-%G = cov(normalize(X));
 [U, D] = eig(G);% get eigs of G
-%eigfaces = normalize(X*U);% get real eigenface vectors
-eigfaces = X*U;
+eigfaces = X*U;% get real eigenvectors
 
-% NICE!!! THE BELOW CODE GIVES ME NORMAL EIG VECTORS!!!!!!!! :)
+% Normalize eigenvectors to satisfy constraint ||v||=1
 for i=1:10
     eigfaces(:,i) = eigfaces(:,i)/norm(eigfaces(:,i));
 end
-
-% TODO: make sure eigfaces(:,i) are normalized such that
-% ||eigfaces(:,i)||=1
-%for i=1:10
-    %eigfaces(:,i) = eigfaces(:,i) - mean;% NOPE
-    %eigfaces(:,i) = normalize(eigfaces(:,i));
-	%eigfaces(:,i) = normalize(eigfaces(:,i), 'center', 'mean');% not quite
-%end
-%eigfaces = normalize(eigfaces, 'center', 'mean');
 %Z = norm(eigfaces(:,10));% check that magnitude of eigface is 1
-%====== BEFORE CONTINUING, MAKE SURE ||eigface||=1 ====================
-%}
 
-%
 % Plot eig faces
 subplot(2, 5, 1);% mean image first
 imagesc(reshape(mean, [56,46]));
@@ -139,32 +122,25 @@ end
 clear eigface
 clear j
 clear p
-%}
+
 
 %% E
-%{
 fprintf('Second timing (E): %f\n', toc - time_pt_b);
 clear time_pt_b
-%}
 
 
 %% G: Project image 1 of person 1 onto eigenspace
-%
 figure(3)
 colormap(gray);
 subplot(2, 5, 1);% mean image first
 imagesc(facedata{1,1});% plot target image
 title('Original');
 
-
-%c = X(:,1);
-
 % Outer loop: estimation of image 1 with an increasing # of eigvectors
 i = 10;% start at max eigvector
 p = 1;% position in figure subplot
 while i > 1
     % First, subtract mean image from image 1
-    %c = normalize(facedata{1,1}(:)-mean);
     c = facedata{1,1}(:)-mean;
     
     est = mean;% initialize image 1 estimation matrix with mean face
@@ -179,8 +155,6 @@ while i > 1
     
     % Compute MSE
     mse = immse(facedata{1,1}(:), est);
-    %N = norm(facedata{1,1}(:)-est);
-    %mse = (N*N)/2576;
     
     % Plot estimated face
     subplot(2, 5, p+1);
@@ -196,6 +170,7 @@ clear c
 clear est
 clear i
 clear j
+clear mse
 clear p
 clear weight
-%}
+
