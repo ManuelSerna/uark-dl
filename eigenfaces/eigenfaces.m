@@ -52,7 +52,6 @@ imagesc(reshape(mean, [56,46]));
 title('Mean Face');
 
 % Compute 2576*2576 covariance matrix S and get its eigs
-%S = cov(normalize(X'));% make sure eigvectors will satisfy ||v||=1
 S = cov(X');
 [eigvectors, eigvals] = eig(S);% NOTE: max eig vals are at bottom of diagonal
 %Z = norm(eigvectors(:,10));% double check eigvectors of cov matrix are normal
