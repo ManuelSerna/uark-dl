@@ -50,8 +50,8 @@ def get_vgg16(num_classes):
 '''
 # Train and test VGG-16 model
 vgg16 = get_vgg16(num_classes);
-#print(vgg16.summary())
-vgg16.fit(x_train, y_train, epochs=10, validation_split=0.1, batch_size=32, verbose=1, shuffle=1)
+print(vgg16.summary())
+history = vgg16.fit(x_train, y_train, epochs=10, validation_split=0.1, batch_size=64, verbose=1, shuffle=1)
 score = vgg16.evaluate(x_test, y_test, verbose=0)
 
 print('Test accuracy:', score[1])
